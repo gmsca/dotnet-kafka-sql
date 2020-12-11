@@ -1,0 +1,16 @@
+D:\kafka-consumer-sql\bin\Debug\net5.0\kafka-consumer-sql.exe
+D:\kafka-consumer-sql\bin\Debug\net5.0\kafka-consumer-sql.deps.json
+D:\kafka-consumer-sql\bin\Debug\net5.0\kafka-consumer-sql.runtimeconfig.json
+D:\kafka-consumer-sql\bin\Debug\net5.0\kafka-consumer-sql.runtimeconfig.dev.json
+D:\kafka-consumer-sql\bin\Debug\net5.0\kafka-consumer-sql.dll
+D:\kafka-consumer-sql\bin\Debug\net5.0\ref\kafka-consumer-sql.dll
+D:\kafka-consumer-sql\bin\Debug\net5.0\kafka-consumer-sql.pdb
+D:\kafka-consumer-sql\obj\Debug\net5.0\kafka-consumer-sql.csprojAssemblyReference.cache
+D:\kafka-consumer-sql\obj\Debug\net5.0\kafka-consumer-sql.GeneratedMSBuildEditorConfig.editorconfig
+D:\kafka-consumer-sql\obj\Debug\net5.0\kafka-consumer-sql.AssemblyInfoInputs.cache
+D:\kafka-consumer-sql\obj\Debug\net5.0\kafka-consumer-sql.AssemblyInfo.cs
+D:\kafka-consumer-sql\obj\Debug\net5.0\kafka-consumer-sql.csproj.CoreCompileInputs.cache
+D:\kafka-consumer-sql\obj\Debug\net5.0\kafka-consumer-sql.dll
+D:\kafka-consumer-sql\obj\Debug\net5.0\ref\kafka-consumer-sql.dll
+D:\kafka-consumer-sql\obj\Debug\net5.0\kafka-consumer-sql.pdb
+D:\kafka-consumer-sql\obj\Debug\net5.0\kafka-consumer-sql.genruntimeconfig.cache
