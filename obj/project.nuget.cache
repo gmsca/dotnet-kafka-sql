@@ -1,8 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "pIg00GAahWMrl2NlLoFMpOlyuzjbr5J371Vxz9vcuSv9EiIMhuAxhht7GScQQvecHVe0SkP4az4/M77iAmQquA==",
+  "dgSpecHash": "EQvVg4OdvH7/dzvZQ5/wa792l0G8IrBhjSAKwtDz/GKTVcGHdWONvfnAmt+gpAJ/3RITgRm/gQF0RWiKE+ed0Q==",
   "success": true,
   "projectFilePath": "D:\\kafka-consumer-sql\\kafka-consumer-sql.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\jwiebe\\.nuget\\packages\\confluent.kafka\\1.5.3\\confluent.kafka.1.5.3.nupkg.sha512",
+    "C:\\Users\\jwiebe\\.nuget\\packages\\librdkafka.redist\\1.5.3\\librdkafka.redist.1.5.3.nupkg.sha512",
+    "C:\\Users\\jwiebe\\.nuget\\packages\\system.memory\\4.5.0\\system.memory.4.5.0.nupkg.sha512"
+  ],
   "logs": []
 }
