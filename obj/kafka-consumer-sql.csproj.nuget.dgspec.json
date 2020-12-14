@@ -43,6 +43,18 @@
             "Confluent.Kafka": {
               "target": "Package",
               "version": "[1.5.3, )"
+            },
+            "Confluent.SchemaRegistry": {
+              "target": "Package",
+              "version": "[1.5.3, )"
+            },
+            "Confluent.SchemaRegistry.Serdes.Avro": {
+              "target": "Package",
+              "version": "[1.5.3, )"
+            },
+            "System.Data.SqlClient": {
+              "target": "Package",
+              "version": "[4.8.2, )"
             }
           },
           "imports": [
