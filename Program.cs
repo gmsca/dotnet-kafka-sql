@@ -7,6 +7,7 @@ using Confluent.SchemaRegistry;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Data.SqlClient;
+using System.Data;
 
 namespace kafka_consumer_sql
 {
@@ -47,7 +48,7 @@ namespace kafka_consumer_sql
                         try
                         {
                             var consumeResult = consumer.Consume(cts.Token);
-                            SendSQL(consumeResult.Message.Value);
+                            SendDataToSQL(consumeResult.Message.Value);
                         }
                         catch (ConsumeException e)
                         {
@@ -65,38 +66,36 @@ namespace kafka_consumer_sql
             cts.Cancel();
         }
 
-        static void SendSQL(GenericRecord message)
+        static void SendDataToSQL(GenericRecord message)
         {
             Object ClaimID = message.GetValue(0);
-
             Object Description = message.GetValue(1);
-            if (Description == null) Description = "null";
-            else Description = "\'" + Description + "\'";
-
             Object FeeSubmitted = message.GetValue(2);
-
             Object TotalOwed = message.GetValue(3);
-
             Object State = message.GetValue(4);
-            if (State == null) State = "null";
-            else State = "\'" + State + "\'";
             Object Paid = message.GetValue(5);
-
-            if ((bool)Paid) Paid = "1";
-            else if (!(bool)Paid) Paid = "0";
-
-            string command = $"INSERT INTO dbo.test (ClaimID, Description, FeeSubmitted, TotalOwed, State, Paid) VALUES ({ClaimID},{Description},{FeeSubmitted},{TotalOwed},{State},{Paid})";
-            Console.WriteLine(command);
-            CreateCommand(command);
+            UpdateTestTable(ClaimID, Description, FeeSubmitted, TotalOwed, State, Paid);
         }
 
-        static void CreateCommand(string queryString)
+        static void UpdateTestTable(Object ClaimID, Object Description, Object FeeSubmitted, Object TotalOwed, Object State, Object Paid)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                SqlCommand command = new SqlCommand(queryString, connection);
-                command.Connection.Open();
-                command.ExecuteNonQuery();
+                using (SqlCommand command = new SqlCommand("[dbo].[UpdateTest]", connection))
+                {
+                    command.CommandType = CommandType.StoredProcedure;
+
+                    command.Parameters.Add("@ClaimID", SqlDbType.Int).Value = ClaimID;
+                    command.Parameters.Add("@Description", SqlDbType.VarChar).Value = Description;
+                    command.Parameters.Add("@FeeSubmitted", SqlDbType.Money).Value = FeeSubmitted;
+                    command.Parameters.Add("@TotalOwed", SqlDbType.Money).Value = TotalOwed;
+                    command.Parameters.Add("@State", SqlDbType.VarChar).Value = State;
+                    command.Parameters.Add("@Paid", SqlDbType.Bit).Value = Paid;
+                    command.Parameters.Add("@StatementType", SqlDbType.VarChar).Value = "Insert";
+
+                    command.Connection.Open();
+                    command.ExecuteNonQuery();
+                }
             }
         }
     }
