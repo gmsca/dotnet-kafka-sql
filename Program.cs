@@ -83,7 +83,7 @@ namespace kafka_consumer_sql
             Object Paid = message.GetValue(5);
 
             if ((bool)Paid) Paid = "1";
-            if (!(bool)Paid) Paid = "0";
+            else if (!(bool)Paid) Paid = "0";
 
             string command = $"INSERT INTO dbo.test (ClaimID, Description, FeeSubmitted, TotalOwed, State, Paid) VALUES ({ClaimID},{Description},{FeeSubmitted},{TotalOwed},{State},{Paid})";
             Console.WriteLine(command);
