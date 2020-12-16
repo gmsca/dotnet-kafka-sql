@@ -93,7 +93,7 @@ namespace kafka_consumer_sql
                     }
 
                     command.Connection.Open();
-                    SqlTransaction tr = connection.BeginTransaction();
+                    //SqlTransaction tr = connection.BeginTransaction();
                     command.ExecuteNonQuery();
                 }
             }
