@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Data.SqlClient;
 using System.Data;
+using System.Collections.Generic;
 
 namespace kafka_consumer_sql
 {
@@ -48,7 +49,9 @@ namespace kafka_consumer_sql
                         try
                         {
                             var consumeResult = consumer.Consume(cts.Token);
-                            SendDataToSQL(consumeResult.Message.Value);
+                            Dictionary<string, object> fields = GetFields(consumeResult.Message.Value);
+                            fields.Add("@StatementType", "Insert");
+                            CallSPROC(fields, "[dbo].[UpdateTest]");
                         }
                         catch (ConsumeException e)
                         {
@@ -66,37 +69,83 @@ namespace kafka_consumer_sql
             cts.Cancel();
         }
 
-        static void SendDataToSQL(GenericRecord message)
+        static Dictionary<string, object> GetFields(GenericRecord message)
         {
-            Object ClaimID = message.GetValue(0);
-            Object Description = message.GetValue(1);
-            Object FeeSubmitted = message.GetValue(2);
-            Object TotalOwed = message.GetValue(3);
-            Object State = message.GetValue(4);
-            Object Paid = message.GetValue(5);
-            UpdateTestTable(ClaimID, Description, FeeSubmitted, TotalOwed, State, Paid);
+            Dictionary<string, object> fields = new Dictionary<string, object>();
+            foreach (Avro.Field m in message.Schema)
+            {
+                fields.Add(("@"+m.Name), message.GetValue(m.Pos));
+            }
+            return fields;
         }
 
-        static void UpdateTestTable(Object ClaimID, Object Description, Object FeeSubmitted, Object TotalOwed, Object State, Object Paid)
+        static void CallSPROC(Dictionary<string, object> fields, string sprocName)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                using (SqlCommand command = new SqlCommand("[dbo].[UpdateTest]", connection))
+                using (SqlCommand command = new SqlCommand(sprocName, connection))
                 {
                     command.CommandType = CommandType.StoredProcedure;
 
-                    command.Parameters.Add("@ClaimID", SqlDbType.Int).Value = ClaimID;
-                    command.Parameters.Add("@Description", SqlDbType.VarChar).Value = Description;
-                    command.Parameters.Add("@FeeSubmitted", SqlDbType.Money).Value = FeeSubmitted;
-                    command.Parameters.Add("@TotalOwed", SqlDbType.Money).Value = TotalOwed;
-                    command.Parameters.Add("@State", SqlDbType.VarChar).Value = State;
-                    command.Parameters.Add("@Paid", SqlDbType.Bit).Value = Paid;
-                    command.Parameters.Add("@StatementType", SqlDbType.VarChar).Value = "Insert";
+                    foreach (KeyValuePair<string, object> kvp in fields)
+                    {
+                        command.Parameters.Add(kvp.Key, GetSqlDbType(sprocName,kvp.Key)).Value = kvp.Value;
+                    }
 
                     command.Connection.Open();
+                    SqlTransaction tr = connection.BeginTransaction();
                     command.ExecuteNonQuery();
                 }
             }
+        }
+
+        static SqlDbType GetSqlDbType(string sprocName, string inputName) {
+            string typeString = QuerySPROCInputType(sprocName,inputName);
+            if (typeString.Equals("int")) return SqlDbType.Int;
+            else if (typeString.Equals("varchar")) return SqlDbType.VarChar;
+            else if (typeString.Equals("money")) return SqlDbType.Money;
+            else if (typeString.Equals("bit")) return SqlDbType.Bit;
+            else {
+                Console.WriteLine("Type not found!!!");
+                Environment.Exit(1);
+                return SqlDbType.VarChar;
+            }
+        }
+
+        static string QuerySPROCInputType(string sprocName, string inputName) {
+            List<List<Object>> type = Select($"select type_name(user_type_id) from sys.parameters where object_id = object_id(\'{sprocName}\') and name=\'{inputName}\'");
+            return type[0][0].ToString();
+        }
+
+        static List<List<Object>> Select(string commandString)
+        {
+            List<List<Object>> rows = new List<List<Object>>();
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                using (SqlCommand command = new SqlCommand(commandString, connection))
+                {
+                    connection.Open();
+                    try
+                    {
+                        SqlDataReader dataReader = command.ExecuteReader();
+                        if (dataReader.HasRows)
+                        {
+                            while (dataReader.Read())
+                            {
+                                List<Object> row = new List<Object>();
+                                for (int i = 0; i < dataReader.FieldCount; i++) row.Add(dataReader.GetSqlValue(i));
+                                rows.Add(row);
+                            }
+                        }
+                        else Console.WriteLine("Query retrieved no rows");
+                    }
+                    catch (SqlException e)
+                    {
+                        Console.WriteLine(e);
+                    }
+                }
+            }
+            return rows;
         }
     }
 }

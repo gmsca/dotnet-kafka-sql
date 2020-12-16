@@ -1,0 +1,3 @@
+Create group: Customer_SaveGroup
+Create indiv: Customer_SaveIndividual
+VB6 Class: CFactory
