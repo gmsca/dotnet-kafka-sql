@@ -1,3 +1,22 @@
 Create group: Customer_SaveGroup
 Create indiv: Customer_SaveIndividual
 VB6 Class: CFactory
+NEED TO ENSURE THAT THE MESSAGE IS NOT ACKED IF THE SPROC FAILS ETC...
+-------------------------------------------------------------------------
+SQL to allow debezium user to use Customer_SaveGroup SPROC
+USE [CIMSHistory]
+GO
+CREATE USER [debezium] FOR LOGIN [debezium]
+GO
+USE [CIMSHistory]
+GO
+ALTER ROLE [db_owner] ADD MEMBER [debezium]
+GO
+USE MASTER
+GO
+GRANT VIEW SERVER STATE TO [debezium]
+-------------------------------------------------------------------------
+The admin tool will need to query the Reference.GroupClassification
+table to get the valid groups, and send the associated ID to kafka for
+the @GroupClassificationID field in Customer_SaveGroup.
+-------------------------------------------------------------------------
