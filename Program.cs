@@ -24,23 +24,55 @@ namespace kafka_consumer_sql
         {
             //CreateCommand("USE CIMS CREATE TABLE Test (ClaimID int, Description varchar(255), FeeSubmitted money, TotalOwed money, State varchar(255), Paid bit);");
             //await Task.Run(() => Consumer());
-            Dictionary<string, object> fields = new Dictionary<string, object>();
-            fields.Add("@ContractID", -1); // Set to -1 when creating new group sproc creates the ContractID
-            fields.Add("@ContractType", 0); // If not defined, default is 0
-            fields.Add("@CompanyName", "asdf"); // Required
-            fields.Add("@ContactName1", ""); // not required, default is empty string
-            fields.Add("@ContactName2", ""); // not required, default is empty string
-            fields.Add("@AssociationID", DBNull.Value); // MUST BE THIS TYPE OF NULL WHEN NOT SPECIFIED
-            fields.Add("@UserID", "jwiebe"); // Required, User that submitted the group creation
-            fields.Add("@TimeStamp", DateTime.Now); // Current time
-            fields.Add("@MaxDependentAge", null); // Defaults to null when not specified not required in message
-            fields.Add("@MaxStudentAge", null); // Defaults to null when not specified not required in message
-            fields.Add("@ExternalDesc", null); // Defaults to null when not specified not required in message
-            fields.Add("@GroupClassificationID", null); // Defaults to null, Set by querying table Reference.GroupClassification (This happends outside of the SaveGroup() method)
-            fields.Add("@GroupFeed", false); // Defaults to false when not specified.
-            fields.Add("@GroupSendDate", DBNull.Value); // MUST BE THIS TYPE OF NULL WHEN NOT SPECIFIED
-            Object ContractID = CallSPROC(fields, "[dbo].[Customer_SaveGroup]")[0];
-            
+            Dictionary<string, object> groupfields = new Dictionary<string, object>();
+            groupfields.Add("@ContractID", -1); // Set to -1 when creating new group sproc creates the ContractID
+            groupfields.Add("@ContractType", 0); // 0-4, comes from Reference.ContractType (0=group) or DBNull.Value
+            groupfields.Add("@CompanyName", "asdf"); // Required
+            groupfields.Add("@ContactName1", ""); // not required, default is empty string
+            groupfields.Add("@ContactName2", ""); // not required, default is empty string
+            groupfields.Add("@AssociationID", DBNull.Value); // from Reference.Association or DBNull.Value
+            groupfields.Add("@UserID", "jwiebe"); // Required, User that submitted the group creation
+            groupfields.Add("@TimeStamp", DateTime.Now); // Current time
+            groupfields.Add("@MaxDependentAge", null); // Defaults to null when not specified not required in message
+            groupfields.Add("@MaxStudentAge", null); // Defaults to null when not specified not required in message
+            groupfields.Add("@ExternalDesc", null); // Defaults to null when not specified not required in message
+            groupfields.Add("@GroupClassificationID", null); // Defaults to null, Set by querying table Reference.GroupClassification (This happends outside of the SaveGroup() method)
+            groupfields.Add("@GroupFeed", false); // Defaults to false when not specified.
+            groupfields.Add("@GroupSendDate", DBNull.Value); // MUST BE THIS TYPE OF NULL WHEN NOT SPECIFIED
+            Object contractID = CallSPROC(groupfields, "[dbo].[Customer_SaveGroup]")[0];
+
+            Dictionary<string, object> emailfields = new Dictionary<string, object>();
+            emailfields.Add("@ContractID", contractID); // Comes from group creation
+            emailfields.Add("@EmailID", -1); // auto generated, -1 means it is new to cims inputoutput
+            emailfields.Add("@EmailAddress", "test@test1.ca"); // comes from primary or admin
+            emailfields.Add("@EmailAddressType", 1); // 1 is primary, 2 is admin
+            emailfields.Add("@UserID", "jwiebe"); // user that created the request
+            emailfields.Add("@TimeStamp", DateTime.Now); // Current time
+            Object emailID = CallSPROC(emailfields, "[dbo].[Customer_SaveContractEmail]")[0];
+
+            Dictionary<string, object> phonefields = new Dictionary<string, object>();
+            phonefields.Add("@ContractID", contractID); // Comes from group creation
+            phonefields.Add("@PhoneTypeID", 0); // 0-4 comes from Reference.PhoneType
+            phonefields.Add("@PhoneID", -1); // send -1 for new phoneID inputoutput
+            phonefields.Add("@AreaCode", 306); // area code int
+            phonefields.Add("@Number", "1234567"); // phone number varchar of 7 numbers
+            phonefields.Add("@UserID", "jwiebe"); // user that created the request
+            phonefields.Add("@TimeStamp", DateTime.Now); // Current time
+            Object phoneID = CallSPROC(phonefields, "[dbo].[Customer_SaveContractPhone]")[0];
+
+            Dictionary<string, object> addressfields = new Dictionary<string, object>();
+            addressfields.Add("@ContractID", contractID); // Comes from group creation
+            addressfields.Add("@AddressTypeID", 1); // 0-3 comes from Reference.AddressType
+            addressfields.Add("@AddressID", -1); // send -1 for new AddressID inputoutput
+            addressfields.Add("@AddressLine1", "123 Street"); // address line 1
+            addressfields.Add("@AddressLine2", ""); // address line 2
+            addressfields.Add("@CountryID", 1); // 1-405 number represents country (1=canada)
+            addressfields.Add("@City", "Regina"); // City
+            addressfields.Add("@ProvID", 1); // 1-120 Represents province (1=Sask)
+            addressfields.Add("@PostalCode", "S4W0T6"); // Postal Code
+            addressfields.Add("@UserID", "jwiebe"); // user that created the request
+            addressfields.Add("@TimeStamp", DateTime.Now); // Current time
+            Object addressID = CallSPROC(addressfields, "[dbo].[Customer_SaveContractAddress]")[0];
         }
 
         static void Consumer()
@@ -142,6 +174,8 @@ namespace kafka_consumer_sql
             else if (typeString.Equals("money")) return SqlDbType.Money;
             else if (typeString.Equals("bit")) return SqlDbType.Bit;
             else if (typeString.Equals("datetime")) return SqlDbType.DateTime;
+            else if (typeString.Equals("smallint")) return SqlDbType.SmallInt;
+            else if (typeString.Equals("char")) return SqlDbType.Char;
             else
             {
                 Console.WriteLine("Type not found!!!");
