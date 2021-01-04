@@ -1,4 +1,14 @@
 {
     "CompanyName": "Test Company",
-    "UserID": "jwiebe"
+    "UserID": "jwiebe",
+    "Addresses": [
+        {
+            "AddressTypeID": 1,
+            "AddressLine1": "123 Street",
+            "CountryID": 1,
+            "City": "Regina",
+            "ProvID": 1,
+            "PostalCode": "S4W0T6"
+        }
+    ]
 }

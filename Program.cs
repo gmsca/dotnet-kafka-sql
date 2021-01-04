@@ -17,14 +17,14 @@ namespace kafka_consumer_sql
     {
         static string bootstrapServers = "localhost:9092";
         static string schemaRegistryUrl = "http://localhost:8081";
-        static string topicName = "group-topic";
+        static string topicName = "test";
         static string groupName = "dotnetconsumer";
         static string connectionString = "Server=172.16.6.68;Database=CIMS;User Id=debezium;Password=Debetest01;";
         static async Task Main(string[] args)
         {
             //CreateCommand("USE CIMS CREATE TABLE Test (ClaimID int, Description varchar(255), FeeSubmitted money, TotalOwed money, State varchar(255), Paid bit);");
-            //await Task.Run(() => Consumer());
-            Dictionary<string, object> groupfields = new Dictionary<string, object>();
+            await Task.Run(() => Consumer());
+            /* Dictionary<string, object> groupfields = new Dictionary<string, object>();
             groupfields.Add("@ContractID", -1); // Set to -1 when creating new group sproc creates the ContractID
             groupfields.Add("@ContractType", 0); // 0-4, comes from Reference.ContractType (0=group) or DBNull.Value
             groupfields.Add("@CompanyName", "asdf"); // Required
@@ -72,7 +72,7 @@ namespace kafka_consumer_sql
             addressfields.Add("@PostalCode", "S4W0T6"); // Postal Code
             addressfields.Add("@UserID", "jwiebe"); // user that created the request
             addressfields.Add("@TimeStamp", DateTime.Now); // Current time
-            Object addressID = CallSPROC(addressfields, "[dbo].[Customer_SaveContractAddress]")[0];
+            Object addressID = CallSPROC(addressfields, "[dbo].[Customer_SaveContractAddress]")[0]; */
         }
 
         static void Consumer()
@@ -123,6 +123,8 @@ namespace kafka_consumer_sql
             Dictionary<string, object> fields = new Dictionary<string, object>();
             foreach (Avro.Field m in message.Schema)
             {
+                /* if (m.Name == "Addresses") fields = Merge([fields, GetFields(message.GetValue(m.Pos))]);
+                else fields.Add(("@" + m.Name), message.GetValue(m.Pos)); */
                 fields.Add(("@" + m.Name), message.GetValue(m.Pos));
             }
             return fields;
@@ -225,6 +227,12 @@ namespace kafka_consumer_sql
                 }
             }
             return rows;
+        }
+        static Dictionary<K, V> Merge<K, V>(IEnumerable<Dictionary<K, V>> dictionaries)
+        {
+            return dictionaries.SelectMany(x => x)
+                            .GroupBy(d => d.Key)
+                            .ToDictionary(x => x.Key, y => y.First().Value);
         }
     }
 }
