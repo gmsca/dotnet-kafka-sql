@@ -51,7 +51,6 @@ namespace kafka_consumer_sql
                             var consumeResult = consumer.Consume(cts.Token);
                             Dictionary<string, object> fields = GetFields(consumeResult.Message.Value);
                             CallBridgeSaveGroup(fields);
-                            Console.WriteLine("Sent!!!");
                         }
                         catch (ConsumeException e)
                         {
