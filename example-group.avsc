@@ -4,213 +4,45 @@
     "name": "Group",
     "fields": [
         {
-            "name": "ContractID",
-            "type": [
-                "int"
-            ],
-            "default": -1
-        },
-        {
-            "name": "ContractType",
-            "type": [
-                "int"
-            ],
-            "default": 0
-        },
-        {
             "name": "CompanyName",
             "type": "string"
         },
         {
-            "name": "ContactName1",
-            "type": "string",
-            "default": ""
+            "name": "GroupClassification",
+            "type": "string"
         },
         {
-            "name": "ContactName2",
-            "type": "string",
-            "default": ""
+            "name": "AddressLine1",
+            "type": "string"
         },
         {
-            "name": "AssociationID",
-            "type": [
-                "null",
-                "int"
-            ],
-            "default": null
+            "name": "City",
+            "type": "string"
+        },
+        {
+            "name": "Province",
+            "type": "string"
         },
         {
             "name": "UserID",
             "type": "string"
         },
         {
-            "name": "TimeStamp",
-            "type": [
-                "long"
-            ],
-            "default": -1
-        },
-        {
-            "name": "MaxDependentAge",
-            "type": [
-                "null",
-                "int"
-            ],
+            "name": "PhoneNumber",
+            "type": "string",
             "default": null
         },
         {
-            "name": "MaxStudentAge",
-            "type": [
-                "null",
-                "int"
-            ],
-            "default": null
+            "name": "PhoneType",
+            "type": "string"
         },
         {
-            "name": "GroupClassificationID",
-            "type": [
-                "null",
-                "int"
-            ],
-            "default": null
+            "name": "EmailAddress",
+            "type": "string"
         },
         {
-            "name": "ExternalDesc",
-            "type": [
-                "null",
-                "int"
-            ],
-            "default": null
-        },
-        {
-            "name": "GroupFeed",
-            "type": [
-                "boolean"
-            ],
-            "default": false
-        },
-        {
-            "name": "GroupSendDate",
-            "type": [
-                "null",
-                "int"
-            ],
-            "default": null
-        },
-        {
-            "name": "EmailAddresses",
-            "type": [
-                "null",
-                {
-                    "type": "array",
-                    "items": {
-                        "type": "record",
-                        "name": "EmailAddress",
-                        "fields": [
-                            {
-                                "name": "EmailID",
-                                "type": [
-                                    "int",
-                                    "null"
-                                ],
-                                "default": -1
-                            },
-                            {
-                                "name": "EmailAddressType",
-                                "type": "int"
-                            },
-                            {
-                                "name": "EmailAddress",
-                                "type": "string"
-                            }
-                        ]
-                    }
-                }
-            ],
-            "default": null
-        },
-        {
-            "name": "PhoneNumbers",
-            "type": [
-                "null",
-                {
-                    "type": "array",
-                    "items": {
-                        "type": "record",
-                        "name": "PhoneNumber",
-                        "fields": [
-                            {
-                                "name": "PhoneID",
-                                "type": [
-                                    "int",
-                                    "null"
-                                ],
-                                "default": -1
-                            },
-                            {
-                                "name": "PhoneTypeID",
-                                "type": "int"
-                            },
-                            {
-                                "name": "PhoneNumber",
-                                "type": "string"
-                            }
-                        ]
-                    }
-                }
-            ],
-            "default": null
-        },
-        {
-            "name": "Addresses",
-            "type": [
-                {
-                    "type": "array",
-                    "items": {
-                        "type": "record",
-                        "name": "Address",
-                        "fields": [
-                            {
-                                "name": "AddressID",
-                                "type": [
-                                    "int",
-                                    "null"
-                                ],
-                                "default": -1
-                            },
-                            {
-                                "name": "AddressTypeID",
-                                "type": "int"
-                            },
-                            {
-                                "name": "AddressLine1",
-                                "type": "string"
-                            },
-                            {
-                                "name": "AddressLine2",
-                                "type": "string",
-                                "default": ""
-                            },
-                            {
-                                "name": "CountryID",
-                                "type": "int"
-                            },
-                            {
-                                "name": "City",
-                                "type": "string"
-                            },
-                            {
-                                "name": "ProvID",
-                                "type": "int"
-                            },
-                            {
-                                "name": "PostalCode",
-                                "type": "string"
-                            }
-                        ]
-                    }
-                }
-            ]
+            "name": "EmailType",
+            "type": "string"
         }
     ]
 }
