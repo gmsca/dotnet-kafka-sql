@@ -22,57 +22,7 @@ namespace kafka_consumer_sql
         static string connectionString = "Server=172.16.6.68;Database=CIMS;User Id=debezium;Password=Debetest01;";
         static async Task Main(string[] args)
         {
-            //CreateCommand("USE CIMS CREATE TABLE Test (ClaimID int, Description varchar(255), FeeSubmitted money, TotalOwed money, State varchar(255), Paid bit);");
             await Task.Run(() => Consumer());
-            /* Dictionary<string, object> groupfields = new Dictionary<string, object>();
-            groupfields.Add("@ContractID", -1); // Set to -1 when creating new group sproc creates the ContractID
-            groupfields.Add("@ContractType", 0); // 0-4, comes from Reference.ContractType (0=group) or DBNull.Value
-            groupfields.Add("@CompanyName", "asdf"); // Required
-            groupfields.Add("@ContactName1", ""); // not required, default is empty string
-            groupfields.Add("@ContactName2", ""); // not required, default is empty string
-            groupfields.Add("@AssociationID", DBNull.Value); // from Reference.Association or DBNull.Value
-            groupfields.Add("@UserID", "jwiebe"); // Required, User that submitted the group creation
-            groupfields.Add("@TimeStamp", DateTime.Now); // Current time
-            groupfields.Add("@MaxDependentAge", null); // Defaults to null when not specified not required in message
-            groupfields.Add("@MaxStudentAge", null); // Defaults to null when not specified not required in message
-            groupfields.Add("@ExternalDesc", null); // Defaults to null when not specified not required in message
-            groupfields.Add("@GroupClassificationID", null); // Defaults to null, Set by querying table Reference.GroupClassification (This happends outside of the SaveGroup() method)
-            groupfields.Add("@GroupFeed", false); // Defaults to false when not specified.
-            groupfields.Add("@GroupSendDate", DBNull.Value); // MUST BE THIS TYPE OF NULL WHEN NOT SPECIFIED
-            Object contractID = CallSPROC(groupfields, "[dbo].[Customer_SaveGroup]")[0];
-
-            Dictionary<string, object> emailfields = new Dictionary<string, object>();
-            emailfields.Add("@ContractID", contractID); // Comes from group creation
-            emailfields.Add("@EmailID", -1); // auto generated, -1 means it is new to cims inputoutput
-            emailfields.Add("@EmailAddress", "test@test1.ca"); // comes from primary or admin
-            emailfields.Add("@EmailAddressType", 1); // 1 is primary, 2 is admin
-            emailfields.Add("@UserID", "jwiebe"); // user that created the request
-            emailfields.Add("@TimeStamp", DateTime.Now); // Current time
-            Object emailID = CallSPROC(emailfields, "[dbo].[Customer_SaveContractEmail]")[0];
-
-            Dictionary<string, object> phonefields = new Dictionary<string, object>();
-            phonefields.Add("@ContractID", contractID); // Comes from group creation
-            phonefields.Add("@PhoneTypeID", 0); // 0-4 comes from Reference.PhoneType
-            phonefields.Add("@PhoneID", -1); // send -1 for new phoneID inputoutput
-            phonefields.Add("@AreaCode", 306); // area code int
-            phonefields.Add("@Number", "1234567"); // phone number varchar of 7 numbers
-            phonefields.Add("@UserID", "jwiebe"); // user that created the request
-            phonefields.Add("@TimeStamp", DateTime.Now); // Current time
-            Object phoneID = CallSPROC(phonefields, "[dbo].[Customer_SaveContractPhone]")[0];
-
-            Dictionary<string, object> addressfields = new Dictionary<string, object>();
-            addressfields.Add("@ContractID", contractID); // Comes from group creation
-            addressfields.Add("@AddressTypeID", 1); // 0-3 comes from Reference.AddressType
-            addressfields.Add("@AddressID", -1); // send -1 for new AddressID inputoutput
-            addressfields.Add("@AddressLine1", "123 Street"); // address line 1
-            addressfields.Add("@AddressLine2", ""); // address line 2
-            addressfields.Add("@CountryID", 1); // 1-405 number represents country (1=canada)
-            addressfields.Add("@City", "Regina"); // City
-            addressfields.Add("@ProvID", 1); // 1-120 Represents province (1=Sask)
-            addressfields.Add("@PostalCode", "S4W0T6"); // Postal Code
-            addressfields.Add("@UserID", "jwiebe"); // user that created the request
-            addressfields.Add("@TimeStamp", DateTime.Now); // Current time
-            Object addressID = CallSPROC(addressfields, "[dbo].[Customer_SaveContractAddress]")[0]; */
         }
 
         static void Consumer()
@@ -99,9 +49,9 @@ namespace kafka_consumer_sql
                         try
                         {
                             var consumeResult = consumer.Consume(cts.Token);
-                            List<Dictionary<string, object>> fields = GetFields(consumeResult.Message.Value);
-                            CallGroupSPROCS(fields);
-                            Console.WriteLine("Test");
+                            Dictionary<string, object> fields = GetFields(consumeResult.Message.Value);
+                            CallBridgeSaveGroup(fields);
+                            Console.WriteLine("Sent!!!");
                         }
                         catch (ConsumeException e)
                         {
@@ -119,27 +69,14 @@ namespace kafka_consumer_sql
             cts.Cancel();
         }
 
-        static List<Dictionary<string, object>> GetFields(GenericRecord message)
+        static Dictionary<string, object> GetFields(GenericRecord message)
         {
-            List<Dictionary<string, object>> listOfFields = new List<Dictionary<string, object>>();
             Dictionary<string, object> fields = new Dictionary<string, object>();
             foreach (Avro.Field m in message.Schema)
             {
-                if (message.GetValue(m.Pos) is Object[])
-                {
-                    Object[] array = (Object[])message.GetValue(m.Pos);
-                    foreach (GenericRecord element in array)
-                    {
-                        foreach (Dictionary<string, object> field in GetFields(element))
-                        {
-                            listOfFields.Add(field);
-                        }
-                    }
-                }
-                else fields.Add((m.Name), message.GetValue(m.Pos));
+                fields.Add(("@"+m.Name), message.GetValue(m.Pos));
             }
-            listOfFields.Add(fields);
-            return listOfFields;
+            return fields;
         }
 
         static List<object> CallSPROC(Dictionary<string, object> fields, string sprocName)
@@ -241,62 +178,11 @@ namespace kafka_consumer_sql
             }
             return rows;
         }
-
-        static void CallGroupSPROCS(List<Dictionary<string, object>> listOfFields)
+        static void CallBridgeSaveGroup(Dictionary<string, object> fields)
         {
-            // --- Prepare fields ---
-            // put @ before each key
-            // set contractID for the address fields
-            // set userID for the address fields
-            // set timestamp for all fields
-            // call SPROCS
-            // ???
-            // profit
-            string userID = "";
-            int contractID = -1;
-
-            for (int i = 0; i < listOfFields.Count; i++)
-            {
-                listOfFields[i] = listOfFields[i].ToDictionary(d => !d.Key.Contains("@") ? "@" + d.Key : d.Key,
-                                    d => d.Key == "TimeStamp" ? DateTime.Now : d.Value);
-                listOfFields[i] = listOfFields[i].ToDictionary(d => d.Key,
-                                    d => (d.Key == "@AssociationID" || d.Key == "@GroupSendDate") && d.Value == null ? DBNull.Value : d.Value);
-                if (listOfFields[i].ContainsKey("@EmailAddresses")) listOfFields[i].Remove("@EmailAddresses");
-                if (listOfFields[i].ContainsKey("@PhoneNumbers")) listOfFields[i].Remove("@PhoneNumbers");
-                if (listOfFields[i].ContainsKey("@Addresses")) listOfFields[i].Remove("@Addresses");
-                if (listOfFields[i].ContainsKey("@UserID")) userID = (String)listOfFields[i]["@UserID"];
-                if (!listOfFields[i].ContainsKey("@TimeStamp")) listOfFields[i]["@TimeStamp"] = DateTime.Now;
-                if (!listOfFields[i].ContainsKey("@UserID") && userID != "") listOfFields[i]["@UserID"] = userID;
-                if (listOfFields[i].ContainsKey("@UserID") && listOfFields[i].ContainsKey("@ContractType") && contractID == -1) { contractID = SaveGroup(listOfFields[i]); listOfFields.Remove(listOfFields[i]); i -= 1; }
-                if (!listOfFields[i].ContainsKey("@ContractID") && contractID != -1) listOfFields[i]["@ContractID"] = contractID;
-                if (listOfFields[i].ContainsKey("@PhoneNumber")) {
-                    listOfFields[i]["@AreaCode"] = Int32.Parse(listOfFields[i]["@PhoneNumber"].ToString().Substring(0,3));
-                    listOfFields[i]["@Number"] = listOfFields[i]["@PhoneNumber"].ToString().Replace("-", String.Empty).Substring(3, 7);
-                    listOfFields[i].Remove("@PhoneNumber");
-                }
-                
-                if (listOfFields[i].ContainsKey("@UserID") && listOfFields[i].ContainsKey("@AddressID") && (int) listOfFields[i]["@AddressID"] == -1) { SaveContractAddress(listOfFields[i]); listOfFields.Remove(listOfFields[i]); i -= 1; }
-                else if (listOfFields[i].ContainsKey("@UserID") && listOfFields[i].ContainsKey("@EmailID") && (int) listOfFields[i]["@EmailID"] == -1) { SaveContractEmail(listOfFields[i]); listOfFields.Remove(listOfFields[i]); i -= 1; }
-                else if (listOfFields[i].ContainsKey("@UserID") && listOfFields[i].ContainsKey("@PhoneID") && (int) listOfFields[i]["@PhoneID"] == -1) { SaveContractPhone(listOfFields[i]); listOfFields.Remove(listOfFields[i]); i -= 1; }
-                
-                if (listOfFields.Count > 0 && i >= listOfFields.Count - 1) i = -1;
-            }
-        }
-        static int SaveGroup(Dictionary<string, object> fields)
-        {
-            return (int)CallSPROC(fields, "[dbo].[Customer_SaveGroup]")[0];
-        }
-        static void SaveContractEmail(Dictionary<string, object> fields)
-        {
-            CallSPROC(fields, "[dbo].[Customer_SaveContractEmail]");
-        }
-        static void SaveContractAddress(Dictionary<string, object> fields)
-        {
-            CallSPROC(fields, "[dbo].[Customer_SaveContractAddress]");
-        }
-        static void SaveContractPhone(Dictionary<string, object> fields)
-        {
-            CallSPROC(fields, "[dbo].[Customer_SaveContractPhone]");
+            object test = CallSPROC(fields, "[dbo].[Bridge_CreateGroup]");
+            object ContractID = Select("select TOP 1 CO_ContractID from CIMS.Customer.Groups ORDER BY CO_ContractID DESC")[0][0];
+            Console.WriteLine("New Group Created, ID = " + ContractID);
         }
     }
 }

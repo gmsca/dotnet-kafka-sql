@@ -24,25 +24,44 @@
             "type": "string"
         },
         {
+            "name": "PostalCode",
+            "type": "string"
+        },
+        {
             "name": "UserID",
             "type": "string"
         },
         {
             "name": "PhoneNumber",
-            "type": "string",
+            "type": [
+                "null",
+                "string"
+            ],
             "default": null
         },
         {
             "name": "PhoneType",
-            "type": "string"
+            "type": [
+                "null",
+                "string"
+            ],
+            "default": null
         },
         {
             "name": "EmailAddress",
-            "type": "string"
+            "type": [
+                "null",
+                "string"
+            ],
+            "default": null
         },
         {
             "name": "EmailType",
-            "type": "string"
+            "type": [
+                "null",
+                "string"
+            ],
+            "default": null
         }
     ]
 }

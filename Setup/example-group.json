@@ -1,0 +1,13 @@
+{
+    "CompanyName": "Test Company",
+    "GroupClassification": "Jumbo",
+    "AddressLine1": "Avro Street",
+    "City": "Regina",
+    "Province": "SK",
+    "PostalCode": "S4W0T6",
+    "PhoneNumber": "747-472-1943",
+    "PhoneType": "Company",
+    "EmailAddress": "josh@AvroTest.ca",
+    "EmailType": "Primary",
+    "UserID": "jwiebe"
+}
