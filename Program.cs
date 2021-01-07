@@ -99,8 +99,9 @@ namespace kafka_consumer_sql
                         try
                         {
                             var consumeResult = consumer.Consume(cts.Token);
-                            Dictionary<string, object> fields = GetFields(consumeResult.Message.Value);
-                            CallSPROC(fields, "[dbo].[Customer_SaveGroup]");
+                            List<Dictionary<string, object>> fields = GetFields(consumeResult.Message.Value);
+                            CallGroupSPROCS(fields);
+                            Console.WriteLine("Test");
                         }
                         catch (ConsumeException e)
                         {
@@ -118,16 +119,27 @@ namespace kafka_consumer_sql
             cts.Cancel();
         }
 
-        static Dictionary<string, object> GetFields(GenericRecord message)
+        static List<Dictionary<string, object>> GetFields(GenericRecord message)
         {
+            List<Dictionary<string, object>> listOfFields = new List<Dictionary<string, object>>();
             Dictionary<string, object> fields = new Dictionary<string, object>();
             foreach (Avro.Field m in message.Schema)
             {
-                /* if (m.Name == "Addresses") fields = Merge([fields, GetFields(message.GetValue(m.Pos))]);
-                else fields.Add(("@" + m.Name), message.GetValue(m.Pos)); */
-                fields.Add(("@" + m.Name), message.GetValue(m.Pos));
+                if (message.GetValue(m.Pos) is Object[])
+                {
+                    Object[] array = (Object[])message.GetValue(m.Pos);
+                    foreach (GenericRecord element in array)
+                    {
+                        foreach (Dictionary<string, object> field in GetFields(element))
+                        {
+                            listOfFields.Add(field);
+                        }
+                    }
+                }
+                else fields.Add((m.Name), message.GetValue(m.Pos));
             }
-            return fields;
+            listOfFields.Add(fields);
+            return listOfFields;
         }
 
         static List<object> CallSPROC(Dictionary<string, object> fields, string sprocName)
@@ -189,7 +201,8 @@ namespace kafka_consumer_sql
         static string QuerySPROCInputType(string sprocName, string inputName)
         {
             List<List<Object>> type = Select($"select type_name(user_type_id) from sys.parameters where object_id = object_id(\'{sprocName}\') and name=\'{inputName}\'");
-            return type[0][0].ToString();
+            if (type.Count == 0) return null;
+            else return type[0][0].ToString();
         }
         static List<String> GetSPROCOutputs(string sprocName)
         {
@@ -228,11 +241,62 @@ namespace kafka_consumer_sql
             }
             return rows;
         }
-        static Dictionary<K, V> Merge<K, V>(IEnumerable<Dictionary<K, V>> dictionaries)
+
+        static void CallGroupSPROCS(List<Dictionary<string, object>> listOfFields)
         {
-            return dictionaries.SelectMany(x => x)
-                            .GroupBy(d => d.Key)
-                            .ToDictionary(x => x.Key, y => y.First().Value);
+            // --- Prepare fields ---
+            // put @ before each key
+            // set contractID for the address fields
+            // set userID for the address fields
+            // set timestamp for all fields
+            // call SPROCS
+            // ???
+            // profit
+            string userID = "";
+            int contractID = -1;
+
+            for (int i = 0; i < listOfFields.Count; i++)
+            {
+                listOfFields[i] = listOfFields[i].ToDictionary(d => !d.Key.Contains("@") ? "@" + d.Key : d.Key,
+                                    d => d.Key == "TimeStamp" ? DateTime.Now : d.Value);
+                listOfFields[i] = listOfFields[i].ToDictionary(d => d.Key,
+                                    d => (d.Key == "@AssociationID" || d.Key == "@GroupSendDate") && d.Value == null ? DBNull.Value : d.Value);
+                if (listOfFields[i].ContainsKey("@EmailAddresses")) listOfFields[i].Remove("@EmailAddresses");
+                if (listOfFields[i].ContainsKey("@PhoneNumbers")) listOfFields[i].Remove("@PhoneNumbers");
+                if (listOfFields[i].ContainsKey("@Addresses")) listOfFields[i].Remove("@Addresses");
+                if (listOfFields[i].ContainsKey("@UserID")) userID = (String)listOfFields[i]["@UserID"];
+                if (!listOfFields[i].ContainsKey("@TimeStamp")) listOfFields[i]["@TimeStamp"] = DateTime.Now;
+                if (!listOfFields[i].ContainsKey("@UserID") && userID != "") listOfFields[i]["@UserID"] = userID;
+                if (listOfFields[i].ContainsKey("@UserID") && listOfFields[i].ContainsKey("@ContractType") && contractID == -1) { contractID = SaveGroup(listOfFields[i]); listOfFields.Remove(listOfFields[i]); i -= 1; }
+                if (!listOfFields[i].ContainsKey("@ContractID") && contractID != -1) listOfFields[i]["@ContractID"] = contractID;
+                if (listOfFields[i].ContainsKey("@PhoneNumber")) {
+                    listOfFields[i]["@AreaCode"] = Int32.Parse(listOfFields[i]["@PhoneNumber"].ToString().Substring(0,3));
+                    listOfFields[i]["@Number"] = listOfFields[i]["@PhoneNumber"].ToString().Replace("-", String.Empty).Substring(3, 7);
+                    listOfFields[i].Remove("@PhoneNumber");
+                }
+                
+                if (listOfFields[i].ContainsKey("@UserID") && listOfFields[i].ContainsKey("@AddressID") && (int) listOfFields[i]["@AddressID"] == -1) { SaveContractAddress(listOfFields[i]); listOfFields.Remove(listOfFields[i]); i -= 1; }
+                else if (listOfFields[i].ContainsKey("@UserID") && listOfFields[i].ContainsKey("@EmailID") && (int) listOfFields[i]["@EmailID"] == -1) { SaveContractEmail(listOfFields[i]); listOfFields.Remove(listOfFields[i]); i -= 1; }
+                else if (listOfFields[i].ContainsKey("@UserID") && listOfFields[i].ContainsKey("@PhoneID") && (int) listOfFields[i]["@PhoneID"] == -1) { SaveContractPhone(listOfFields[i]); listOfFields.Remove(listOfFields[i]); i -= 1; }
+                
+                if (listOfFields.Count > 0 && i >= listOfFields.Count - 1) i = -1;
+            }
+        }
+        static int SaveGroup(Dictionary<string, object> fields)
+        {
+            return (int)CallSPROC(fields, "[dbo].[Customer_SaveGroup]")[0];
+        }
+        static void SaveContractEmail(Dictionary<string, object> fields)
+        {
+            CallSPROC(fields, "[dbo].[Customer_SaveContractEmail]");
+        }
+        static void SaveContractAddress(Dictionary<string, object> fields)
+        {
+            CallSPROC(fields, "[dbo].[Customer_SaveContractAddress]");
+        }
+        static void SaveContractPhone(Dictionary<string, object> fields)
+        {
+            CallSPROC(fields, "[dbo].[Customer_SaveContractPhone]");
         }
     }
 }

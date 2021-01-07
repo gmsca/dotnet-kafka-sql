@@ -152,8 +152,8 @@
                                 "type": "int"
                             },
                             {
-                                "name": "number",
-                                "type": "int"
+                                "name": "PhoneNumber",
+                                "type": "string"
                             }
                         ]
                     }
