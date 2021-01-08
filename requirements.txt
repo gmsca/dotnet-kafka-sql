@@ -23,5 +23,3 @@ the @GroupClassificationID field in Customer_SaveGroup.
 Required Fields to Create a new group from admin tool:
 Name of company
 UserID for the admin
-
-
